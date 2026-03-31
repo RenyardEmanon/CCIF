@@ -1,6 +1,6 @@
 package com.climate.backend.controller;
 
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -23,7 +23,7 @@ public class ClimateController {
     private static final String PYTHON_API_URL = "http://127.0.0.1:8000/predict";
 
     private final RestTemplate restTemplate = new RestTemplate();
-
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * POST /api/climate/predict
@@ -61,7 +61,19 @@ public class ClimateController {
                 prediction = addCascadingAnalysis(prediction, request);
             }
 
-            return ResponseEntity.ok(prediction);
+            // Wrap response to match frontend expectations
+            Map<String, Object> predictionMap = new HashMap<>();
+            predictionMap.put("cropLoss",      prediction.get("crop_loss"));
+            predictionMap.put("energyLoad",    prediction.get("energy_load"));
+            predictionMap.put("transportDelay", prediction.get("transport_delay"));
+
+            Map<String, Object> wrapped = new HashMap<>();
+            wrapped.put("prediction",              predictionMap);
+            wrapped.put("cascading_alert",         prediction.get("cascading_alert"));
+            wrapped.put("alert_message",           prediction.get("alert_message"));
+            wrapped.put("cascading_impact_score",  prediction.get("cascading_impact_score"));
+
+            return ResponseEntity.ok(wrapped);
 
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
