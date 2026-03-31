@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CCIF Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --surface: #131929;
+      --surface2: #1c2740;
+      --accent: #00e5ff;
+      --accent2: #ff6b35;
+      --accent3: #7fff6b;
+      --text: #e8edf5;
+      --muted: #5a6a85;
+      --danger: #ff4757;
+      --border: rgba(0, 229, 255, 0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      padding: 40px 24px;
+      background-image:
+        radial-gradient(ellipse at 10% 20%, rgba(0,229,255,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 80%, rgba(255,107,53,0.05) 0%, transparent 50%);
+    }
+
+    header {
+      max-width: 860px;
+      margin: 0 auto 48px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 10px;
+      border-radius: 2px;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #e8edf5 30%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 15px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 860px;
+      margin: 0 auto 28px;
+    }
+
+    .card h2 {
+      font-size: 13px;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 11px;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="number"] {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.1);
+    }
+
+    input[type="number"]::placeholder { color: var(--muted); }
+
+    button {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 13px 28px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.85; }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .error-banner {
+      background: rgba(255,71,87,0.12);
+      border: 1px solid rgba(255,71,87,0.35);
+      border-radius: 6px;
+      color: var(--danger);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      padding: 12px 16px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    /* Results */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .metric {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 20px 16px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .metric.energy { border-left-color: var(--accent2); }
+    .metric.transport { border-left-color: var(--accent3); }
+    .metric.cis { border-left-color: #a78bfa; }
+
+    .metric-label {
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .recommendation-box {
+      background: rgba(0,229,255,0.06);
+      border: 1px solid rgba(0,229,255,0.2);
+      border-radius: 8px;
+      padding: 18px 20px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 28px;
+    }
+
+    .recommendation-box strong {
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+    }
+
+    #results { display: none; }
+
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-row { display: flex; align-items: center; }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="tag">Climate Systems</div>
+  <h1>Cascading Climate<br/>Impact Forecaster</h1>
+  <p>// Enter environmental parameters to model downstream impacts</p>
+</header>
+
+<!-- Input Card -->
+<div class="card">
+  <h2>// Environmental Parameters</h2>
+
+  <div class="input-grid">
+    <div class="field">
+      <label for="temp">Temperature (°C)</label>
+      <input type="number" id="temp" placeholder="e.g. 38" required />
+    </div>
+    <div class="field">
+      <label for="soil">Soil Moisture (%)</label>
+      <input type="number" id="soil" placeholder="e.g. 22" required />
+    </div>
+    <div class="field">
+      <label for="ndvi">NDVI Index</label>
+      <input type="number" id="ndvi" step="0.01" placeholder="e.g. 0.45" required />
+    </div>
+    <div class="field">
+      <label for="humidity">Humidity (%)</label>
+      <input type="number" id="humidity" placeholder="e.g. 60" required />
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button id="analyzeBtn" type="button">Analyze Impact</button>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <div class="error-banner" id="errorBanner"></div>
+</div>
+
+<!-- Results Card -->
+<div class="card" id="results">
+  <h2>// Impact Analysis</h2>
+
+  <div class="results-grid">
+    <div class="metric">
+      <div class="metric-label">Crop Loss</div>
+      <div class="metric-value" id="val-crop">—</div>
+    </div>
+    <div class="metric energy">
+      <div class="metric-label">Energy Load</div>
+      <div class="metric-value" id="val-energy">—</div>
+    </div>
+    <div class="metric transport">
+      <div class="metric-label">Transport Delay</div>
+      <div class="metric-value" id="val-transport">—</div>
+    </div>
+    <div class="metric cis">
+      <div class="metric-label">CIS Score</div>
+      <div class="metric-value" id="val-cis">—</div>
+    </div>
+  </div>
+
+  <div class="recommendation-box">
+    <strong>Recommendation</strong>
+    <span id="val-rec">—</span>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="impactChart"></canvas>
+  </div>
+</div>
+
+<script>
+  const API_URL = "/api/analyze"; // ← Change to your deployed API endpoint
+
+  let chart;
+
+  document.getElementById("analyzeBtn").addEventListener("click", async () => {
+    const temp     = parseFloat(document.getElementById("temp").value);
+    const soil     = parseFloat(document.getElementById("soil").value);
+    const ndvi     = parseFloat(document.getElementById("ndvi").value);
+    const humidity = parseFloat(document.getElementById("humidity").value);
+
+    // Basic validation
+    if ([temp, soil, ndvi, humidity].some(v => isNaN(v))) {
+      showError("Please fill in all fields with valid numbers.");
+      return;
+    }
+
+    clearError();
+    setLoading(true);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ temp, soil, ndvi, humidity })
+      });
+
+      // Check HTTP status before parsing
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server error ${response.status}: ${errText}`);
+      }
+
+      const result = await response.json();
+      displayResult(result);
+      drawChart(result);
+
+    } catch (err) {
+      showError(`Request failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function displayResult(data) {
+    document.getElementById("val-crop").textContent     = data.prediction.cropLoss.toFixed(2) + "%";
+    document.getElementById("val-energy").textContent   = data.prediction.energyLoad.toFixed(2) + "%";
+    document.getElementById("val-transport").textContent = data.prediction.transportDelay.toFixed(2) + "%";
+    document.getElementById("val-cis").textContent      = data.CIS.toFixed(2);
+    document.getElementById("val-rec").textContent      = data.recommendation;
+    document.getElementById("results").style.display    = "block";
+  }
+
+  function drawChart(data) {
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("impactChart"), {
+      type: "bar",
+      data: {
+        labels: ["Crop Loss", "Energy Load", "Transport Delay"],
+        datasets: [{
+          label: "Impact %",
+          data: [
+            data.prediction.cropLoss,
+            data.prediction.energyLoad,
+            data.prediction.transportDelay
+          ],
+          backgroundColor: [
+            "rgba(0, 229, 255, 0.75)",
+            "rgba(255, 107, 53, 0.75)",
+            "rgba(127, 255, 107, 0.75)"
+          ],
+          borderColor: [
+            "#00e5ff",
+            "#ff6b35",
+            "#7fff6b"
+          ],
+          borderWidth: 2,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            ticks: { color: "#5a6a85", font: { family: "Space Mono", size: 11 } },
+            grid: { color: "rgba(255,255,255,0.04)" }
+          },
+          y: {
+            ticks: { color: "#5a6a85", font: { family: "Space Mono", size: 11 } },
+            grid: { color: "rgba(255,255,255,0.04)" },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById("analyzeBtn");
+    const spinner = document.getElementById("spinner");
+    btn.disabled = on;
+    btn.textContent = on ? "Analyzing…" : "Analyze Impact";
+    spinner.style.display = on ? "inline-block" : "none";
+  }
+
+  function showError(msg) {
+    const banner = document.getElementById("errorBanner");
+    banner.textContent = msg;
+    banner.style.display = "block";
+  }
+
+  function clearError() {
+    const banner = document.getElementById("errorBanner");
+    banner.textContent = "";
+    banner.style.display = "none";
+  }
+</script>
+
+</body>
+</html>
